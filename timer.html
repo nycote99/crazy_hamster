@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hamster Zen Timer</title>
+    <style>
+        :root {
+            --bg-color: #fdf6e3;
+            --wood-chip: #e6ccb2;
+            --hamster-color: #e6a45e;
+            /* On ajuste la durée ici (4 minutes = 240s) */
+            --timer-duration: 240s; 
+        }
+
+        body {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: var(--bg-color);
+            overflow: hidden;
+        }
+
+        /* Conteneur principal */
+        .stage {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        /* Le grand cercle de ripe */
+        .wheel-path {
+            position: absolute;
+            bottom: -700px; /* On cache la majorité du cercle en bas */
+            width: 1000px;
+            height: 1000px;
+            background: #ddc3a5;
+            border-radius: 50%;
+            border: 8px solid #bcaaa4;
+            overflow: hidden;
+            /* Vitesse ralentie à 8s pour un tour complet visuel */
+            animation: rotateWheel 8s linear infinite;
+        }
+
+        /* Texture de la ripe à l'intérieur du cercle */
+        .wheel-path::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(ellipse at center, var(--wood-chip) 20%, transparent 25%),
+                radial-gradient(ellipse at center, #d7b899 15%, transparent 20%);
+            background-size: 80px 40px, 100px 60px;
+            background-position: 0 0, 50px 30px;
+            opacity: 0.8;
+        }
+
+        @keyframes rotateWheel {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(-360deg); }
+        }
+
+        /* Le Hamster positionné au sommet de la courbe */
+        .hamster {
+            position: absolute;
+            bottom: 275px; /* Ajusté pour être sur le haut du cercle */
+            width: 70px;
+            height: 45px;
+            background: var(--hamster-color);
+            border-radius: 50% 60% 40% 40%;
+            z-index: 10;
+            animation: gallop 0.6s ease-in-out infinite alternate;
+        }
+
+        /* Détails du hamster */
+        .hamster::before { /* Oreille */
+            content: '';
+            position: absolute;
+            top: -5px;
+            right: 15px;
+            width: 12px;
+            height: 12px;
+            background: #d48c44;
+            border-radius: 50%;
+        }
+
+        .hamster::after { /* Oeil */
+            content: '';
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 5px;
+            height: 5px;
+            background: black;
+            border-radius: 50%;
+        }
+
+        /* Animation de galop (rebond léger) */
+        @keyframes gallop {
+            from { transform: translateY(0); }
+            to { transform: translateY(-8px); }
+        }
+
+        /* Script pour arrêter après 4 minutes */
+        .stop-animation {
+            animation-play-state: paused !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="stage">
+        <div class="wheel-path" id="wheel"></div>
+        <div class="hamster" id="hamster"></div>
+    </div>
+
+    <script>
+        // On arrête l'animation après 4 minutes (240 000 ms)
+        setTimeout(() => {
+            document.getElementById('wheel').classList.add('stop-animation');
+            document.getElementById('hamster').classList.add('stop-animation');
+        }, 240000);
+    </script>
+
+</body>
+</html>

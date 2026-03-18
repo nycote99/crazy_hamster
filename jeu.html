@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Chonky Hampter Fixed</title>
+    <style>
+        :root {
+            --bg-color: #2c3e50;
+            --maze-wall: #34495e;
+            --maze-path: #ecf0f1;
+            --hamster-color: #e6a45e;
+            --exit-color: #27ae60;
+            --tile-size: 25px;
+        }
+
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: var(--bg-color);
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+            color: white;
+            position: fixed;
+            width: 100%;
+            touch-action: none; /* Bloque le zoom au niveau global */
+        }
+
+        #game-container {
+            position: relative;
+            background-color: var(--maze-path);
+            border: 5px solid var(--maze-wall);
+        }
+
+        .tile { position: absolute; width: var(--tile-size); height: var(--tile-size); }
+        .wall { background-color: var(--maze-wall); }
+        .exit { background-color: var(--exit-color); border-radius: 5px; z-index: 1; }
+
+        #hamster {
+            position: absolute;
+            width: calc(var(--tile-size) * 1.8); 
+            height: calc(var(--tile-size) * 0.9);
+            background-color: var(--hamster-color);
+            border-radius: 50px; 
+            transition: all 0.08s ease-out;
+            z-index: 10;
+        }
+
+        #hamster::after { 
+            content: ''; position: absolute; top: 25%; right: 15%;
+            width: 4px; height: 4px; background: black; border-radius: 50%;
+        }
+
+        #hamster.face-right { transform: translate(10%, 5%) scaleX(1); }
+        #hamster.face-left { transform: translate(10%, 5%) scaleX(-1); }
+
+        #mobile-controls {
+            display: none; grid-template-areas: ". up ." "left . right" ". down .";
+            gap: 15px; margin-top: 20px;
+        }
+
+        .btn {
+            width: 65px; height: 65px; background: rgba(255,255,255,0.2);
+            border: 2px solid white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 24px; color: white;
+            cursor: pointer;
+            touch-action: none; /* Important */
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #win-screen {
+            display: none; position: absolute; inset: 0;
+            background: rgba(0,0,0,0.85); flex-direction: column;
+            align-items: center; justify-content: center; z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+    <h2 style="margin: 5px;">HAMPTER MAZE</h2>
+
+    <div id="game-container">
+        <div id="maze"></div>
+        <div id="hamster" class="face-right"></div>
+        <div id="win-screen">
+            <h2 style="color:#2ecc71">SORTIE TROUVÉE !</h2>
+            <button onclick="location.reload()" style="padding:10px 20px; cursor:pointer;">Nouveau Labyrinthe</button>
+        </div>
+    </div>
+
+    <div id="mobile-controls">
+        <div class="btn" style="grid-area:up" onpointerdown="move('up')">↑</div>
+        <div class="btn" style="grid-area:left" onpointerdown="move('left')">←</div>
+        <div class="btn" style="grid-area:right" onpointerdown="move('right')">→</div>
+        <div class="btn" style="grid-area:down" onpointerdown="move('down')">↓</div>
+    </div>
+
+    <script>
+        // --- BLOQUEUR DE ZOOM RADICAL ---
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 1) e.preventDefault();
+        }, { passive: false });
+
+        let lastTap = 0;
+        document.addEventListener('touchend', (e) => {
+            const now = Date.now();
+            if (now - lastTap <= 300) e.preventDefault();
+            lastTap = now;
+        }, { passive: false });
+
+        const TILE_SIZE = 25;
+        const COLS = 15;
+        const ROWS = 15;
+        let grid = [];
+        let playerPos = { x: 1, y: 1 };
+        const hamsterEl = document.getElementById('hamster');
+
+        function generateMaze(cols, rows) {
+            let maze = Array.from({ length: rows }, () => Array(cols).fill(1));
+            function walk(x, y) {
+                maze[y][x] = 0;
+                let dirs = [[0, -2], [0, 2], [-2, 0], [2, 0]].sort(() => Math.random() - 0.5);
+                for (let [dx, dy] of dirs) {
+                    let nx = x + dx, ny = y + dy;
+                    if (nx > 0 && nx < cols && ny > 0 && ny < rows && maze[ny][nx] === 1) {
+                        maze[y + dy / 2][x + dx / 2] = 0;
+                        walk(nx, ny);
+                    }
+                }
+            }
+            walk(1, 1);
+            maze[rows-2][cols-2] = 2;
+            return maze;
+        }
+
+        function init() {
+            grid = generateMaze(COLS, ROWS);
+            const mazeEl = document.getElementById('maze');
+            const container = document.getElementById('game-container');
+            container.style.width = (COLS * TILE_SIZE) + 'px';
+            container.style.height = (ROWS * TILE_SIZE) + 'px';
+
+            grid.forEach((row, y) => {
+                row.forEach((val, x) => {
+                    if (val !== 0) {
+                        const tile = document.createElement('div');
+                        tile.className = `tile ${val === 1 ? 'wall' : 'exit'}`;
+                        tile.style.left = (x * TILE_SIZE) + 'px';
+                        tile.style.top = (y * TILE_SIZE) + 'px';
+                        mazeEl.appendChild(tile);
+                    }
+                });
+            });
+
+            if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+                document.getElementById('mobile-controls').style.display = 'grid';
+            }
+            updateHamster();
+        }
+
+        function updateHamster() {
+            hamsterEl.style.left = (playerPos.x * TILE_SIZE) + 'px';
+            hamsterEl.style.top = (playerPos.y * TILE_SIZE) + 'px';
+        }
+
+        function move(dir) {
+            let nx = playerPos.x, ny = playerPos.y;
+            if (dir === 'up') ny--;
+            if (dir === 'down') ny++;
+            if (dir === 'left') nx--;
+            if (dir === 'right') nx++;
+
+            if (dir === 'left') {
+                hamsterEl.classList.remove('face-right');
+                hamsterEl.classList.add('face-left');
+            } else if (dir === 'right') {
+                hamsterEl.classList.remove('face-left');
+                hamsterEl.classList.add('face-right');
+            }
+
+            if (grid[ny] && (grid[ny][nx] === 0 || grid[ny][nx] === 2)) {
+                playerPos.x = nx;
+                playerPos.y = ny;
+                updateHamster();
+                if (grid[ny][nx] === 2) document.getElementById('win-screen').style.display = 'flex';
+            }
+        }
+
+        window.addEventListener('keydown', e => {
+            if (e.key.includes('Arrow')) {
+                e.preventDefault();
+                move(e.key.replace('Arrow', '').toLowerCase());
+            }
+        });
+
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+# --- Sécurité et Clés ---
+*.pem
+*.key
+*.pub
+ssh_keys/
+secrets.txt
+.env
+
+# --- Système et OS ---
+.DS_Store
+Thumbs.db
+.Spotlight-V100
+.Trashes
+
+# --- Éditeurs de Code ---
+.vscode/
+.idea/
+*.swp
+*.bak
+
+# --- Docker & Environnements ---
+.docker/
+docker-compose.override.yml
+node_modules/
+temp/
+logs/
+
+# --- Spécifique au Projet Crazy Hamster ---
+# (Ajoute ici des fichiers de notes personnelles si nécessaire)
+notes_ecriture.txt

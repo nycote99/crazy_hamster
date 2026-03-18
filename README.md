@@ -1,7 +1,7 @@
 # 🐹 Crazy Hamster
 
-![Status](https://img.shields.io/badge/Status-Stable-green)
-![Platform](https://img.shields.io/badge/Platform-Web-lightgrey)
+[![Status](https://img.shields.io/badge/Status-Stable-green)](https://github.com/TON_NOM_UTILISATEUR/crazy-hamster)
+[![Platform](https://img.shields.io/badge/Platform-Web-lightgrey)](https://TON_NOM_UTILISATEUR.github.io/crazy-hamster/)
 [![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-orange.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
 
 **Crazy Hamster** est une mini-suite d'applications web légères et ludiques centrées sur l'univers d'un hamster intrépide. Ce projet combine un jeu de labyrinthe procédural et un outil de relaxation (Timer Zen), développé sans frameworks pour une performance maximale.

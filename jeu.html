@@ -2,205 +2,197 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Chonky Hampter Fixed</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🐹 Crazy Hamster - Labyrinthe</title>
     <style>
         :root {
-            --bg-color: #2c3e50;
-            --maze-wall: #34495e;
-            --maze-path: #ecf0f1;
-            --hamster-color: #e6a45e;
-            --exit-color: #27ae60;
-            --tile-size: 25px;
+            --wood: #a67c52;
+            --light-wood: #f0e6d2;
+            --hamster-bg: #e6ccb2;
+            --exit: #4caf50;
         }
 
         body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--hamster-bg);
             margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
-            background-color: var(--bg-color);
-            font-family: 'Courier New', Courier, monospace;
+            touch-action: none; /* Empêche le scroll accidentel sur mobile */
             overflow: hidden;
-            color: white;
-            position: fixed;
-            width: 100%;
-            touch-action: none; /* Bloque le zoom au niveau global */
         }
 
-        #game-container {
-            position: relative;
-            background-color: var(--maze-path);
-            border: 5px solid var(--maze-wall);
+        h1 { color: #5d4037; margin: 10px 0; font-size: 1.2rem; }
+
+        /* Interface de contrôle */
+        #ui-layer {
+            background: var(--light-wood);
+            padding: 10px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 2px solid var(--wood);
         }
 
-        .tile { position: absolute; width: var(--tile-size); height: var(--tile-size); }
-        .wall { background-color: var(--maze-wall); }
-        .exit { background-color: var(--exit-color); border-radius: 5px; z-index: 1; }
-
-        #hamster {
-            position: absolute;
-            width: calc(var(--tile-size) * 1.8); 
-            height: calc(var(--tile-size) * 0.9);
-            background-color: var(--hamster-color);
-            border-radius: 50px; 
-            transition: all 0.08s ease-out;
-            z-index: 10;
+        select, button {
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid var(--wood);
+            font-size: 1rem;
         }
 
-        #hamster::after { 
-            content: ''; position: absolute; top: 25%; right: 15%;
-            width: 4px; height: 4px; background: black; border-radius: 50%;
+        canvas {
+            background-color: white;
+            border: 5px solid var(--wood);
+            border-radius: 8px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
 
-        #hamster.face-right { transform: translate(10%, 5%) scaleX(1); }
-        #hamster.face-left { transform: translate(10%, 5%) scaleX(-1); }
-
+        /* Contrôles tactiles pour iPhone */
         #mobile-controls {
-            display: none; grid-template-areas: ". up ." "left . right" ". down .";
-            gap: 15px; margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(3, 60px);
+            grid-template-rows: repeat(2, 60px);
+            gap: 10px;
+            margin-top: 20px;
         }
 
         .btn {
-            width: 65px; height: 65px; background: rgba(255,255,255,0.2);
-            border: 2px solid white; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 24px; color: white;
-            cursor: pointer;
-            touch-action: none; /* Important */
+            background: var(--wood);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             user-select: none;
-            -webkit-user-select: none;
-            -webkit-tap-highlight-color: transparent;
         }
 
-        #win-screen {
-            display: none; position: absolute; inset: 0;
-            background: rgba(0,0,0,0.85); flex-direction: column;
-            align-items: center; justify-content: center; z-index: 100;
-        }
+        .btn:active { background: #5d4037; transform: scale(0.9); }
+        #btn-up { grid-column: 2; }
+        #btn-left { grid-column: 1; grid-row: 2; }
+        #btn-down { grid-column: 2; grid-row: 2; }
+        #btn-right { grid-column: 3; grid-row: 2; }
     </style>
 </head>
 <body>
 
-    <h2 style="margin: 5px;">HAMPTER MAZE</h2>
+    <h1>🐹 Labyrinthe Royal</h1>
 
-    <div id="game-container">
-        <div id="maze"></div>
-        <div id="hamster" class="face-right"></div>
-        <div id="win-screen">
-            <h2 style="color:#2ecc71">SORTIE TROUVÉE !</h2>
-            <button onclick="location.reload()" style="padding:10px 20px; cursor:pointer;">Nouveau Labyrinthe</button>
-        </div>
+    <div id="ui-layer">
+        <label for="difficulty"><b>Taille :</b></label>
+        <select id="difficulty" onchange="changeDifficulty(this.value)">
+            <option value="15">Nain (15x15)</option>
+            <option value="25" selected>Syrien (25x25)</option>
+            <option value="35">Expert (35x35)</option>
+        </select>
+        <button onclick="initGame()">🔄</button>
     </div>
 
+    <canvas id="mazeCanvas"></canvas>
+
     <div id="mobile-controls">
-        <div class="btn" style="grid-area:up" onpointerdown="move('up')">↑</div>
-        <div class="btn" style="grid-area:left" onpointerdown="move('left')">←</div>
-        <div class="btn" style="grid-area:right" onpointerdown="move('right')">→</div>
-        <div class="btn" style="grid-area:down" onpointerdown="move('down')">↓</div>
+        <button class="btn" id="btn-up" onclick="move(0, -1)">▲</button>
+        <button class="btn" id="btn-left" onclick="move(-1, 0)">◀</button>
+        <button class="btn" id="btn-down" onclick="move(0, 1)">▼</button>
+        <button class="btn" id="btn-right" onclick="move(1, 0)">▶</button>
     </div>
 
     <script>
-        // --- BLOQUEUR DE ZOOM RADICAL ---
-        document.addEventListener('touchstart', (e) => {
-            if (e.touches.length > 1) e.preventDefault();
-        }, { passive: false });
-
-        let lastTap = 0;
-        document.addEventListener('touchend', (e) => {
-            const now = Date.now();
-            if (now - lastTap <= 300) e.preventDefault();
-            lastTap = now;
-        }, { passive: false });
-
-        const TILE_SIZE = 25;
-        const COLS = 15;
-        const ROWS = 15;
+        const canvas = document.getElementById('mazeCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let gridSize = 25;
+        let cellSize;
         let grid = [];
-        let playerPos = { x: 1, y: 1 };
-        const hamsterEl = document.getElementById('hamster');
+        let player = { x: 1, y: 1 };
+        let goal = { x: 0, y: 0 };
 
-        function generateMaze(cols, rows) {
-            let maze = Array.from({ length: rows }, () => Array(cols).fill(1));
+        function changeDifficulty(val) {
+            gridSize = parseInt(val);
+            initGame();
+        }
+
+        function initGame() {
+            // Adaptation à l'écran mobile
+            const size = Math.min(window.innerWidth * 0.9, 400);
+            canvas.width = size;
+            canvas.height = size;
+            cellSize = canvas.width / gridSize;
+
+            generateMaze();
+            player = { x: 1, y: 1 };
+            draw();
+        }
+
+        function generateMaze() {
+            grid = Array(gridSize).fill().map(() => Array(gridSize).fill(1));
+            
             function walk(x, y) {
-                maze[y][x] = 0;
-                let dirs = [[0, -2], [0, 2], [-2, 0], [2, 0]].sort(() => Math.random() - 0.5);
+                grid[y][x] = 0;
+                const dirs = [[0, -2], [0, 2], [-2, 0], [2, 0]].sort(() => Math.random() - 0.5);
+                
                 for (let [dx, dy] of dirs) {
                     let nx = x + dx, ny = y + dy;
-                    if (nx > 0 && nx < cols && ny > 0 && ny < rows && maze[ny][nx] === 1) {
-                        maze[y + dy / 2][x + dx / 2] = 0;
+                    if (nx > 0 && nx < gridSize && ny > 0 && ny < gridSize && grid[ny][nx] === 1) {
+                        grid[y + dy/2][x + dx/2] = 0;
                         walk(nx, ny);
                     }
                 }
             }
+
             walk(1, 1);
-            maze[rows-2][cols-2] = 2;
-            return maze;
+            goal = { x: gridSize - 2, y: gridSize - 2 };
+            grid[goal.y][goal.x] = 2; // Sortie
         }
 
-        function init() {
-            grid = generateMaze(COLS, ROWS);
-            const mazeEl = document.getElementById('maze');
-            const container = document.getElementById('game-container');
-            container.style.width = (COLS * TILE_SIZE) + 'px';
-            container.style.height = (ROWS * TILE_SIZE) + 'px';
-
-            grid.forEach((row, y) => {
-                row.forEach((val, x) => {
-                    if (val !== 0) {
-                        const tile = document.createElement('div');
-                        tile.className = `tile ${val === 1 ? 'wall' : 'exit'}`;
-                        tile.style.left = (x * TILE_SIZE) + 'px';
-                        tile.style.top = (y * TILE_SIZE) + 'px';
-                        mazeEl.appendChild(tile);
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let y = 0; y < gridSize; y++) {
+                for (let x = 0; x < gridSize; x++) {
+                    if (grid[y][x] === 1) {
+                        ctx.fillStyle = '#5d4037';
+                        ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+                    } else if (grid[y][x] === 2) {
+                        ctx.fillStyle = '#4caf50';
+                        ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
                     }
-                });
-            });
-
-            if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-                document.getElementById('mobile-controls').style.display = 'grid';
+                }
             }
-            updateHamster();
+            // Dessin du Hamster
+            ctx.fillStyle = '#ffcc80';
+            ctx.beginPath();
+            ctx.arc((player.x + 0.5) * cellSize, (player.y + 0.5) * cellSize, cellSize/3, 0, Math.PI * 2);
+            ctx.fill();
         }
 
-        function updateHamster() {
-            hamsterEl.style.left = (playerPos.x * TILE_SIZE) + 'px';
-            hamsterEl.style.top = (playerPos.y * TILE_SIZE) + 'px';
-        }
-
-        function move(dir) {
-            let nx = playerPos.x, ny = playerPos.y;
-            if (dir === 'up') ny--;
-            if (dir === 'down') ny++;
-            if (dir === 'left') nx--;
-            if (dir === 'right') nx++;
-
-            if (dir === 'left') {
-                hamsterEl.classList.remove('face-right');
-                hamsterEl.classList.add('face-left');
-            } else if (dir === 'right') {
-                hamsterEl.classList.remove('face-left');
-                hamsterEl.classList.add('face-right');
-            }
-
+        function move(dx, dy) {
+            let nx = player.x + dx;
+            let ny = player.y + dy;
             if (grid[ny] && (grid[ny][nx] === 0 || grid[ny][nx] === 2)) {
-                playerPos.x = nx;
-                playerPos.y = ny;
-                updateHamster();
-                if (grid[ny][nx] === 2) document.getElementById('win-screen').style.display = 'flex';
+                player.x = nx;
+                player.y = ny;
+                draw();
+                if (grid[ny][nx] === 2) {
+                    setTimeout(() => { alert("Miam ! Le hamster a trouvé la sortie ! 🐹🌽"); initGame(); }, 100);
+                }
             }
         }
 
-        window.addEventListener('keydown', e => {
-            if (e.key.includes('Arrow')) {
-                e.preventDefault();
-                move(e.key.replace('Arrow', '').toLowerCase());
-            }
+        // Contrôles clavier
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowUp') move(0, -1);
+            if (e.key === 'ArrowDown') move(0, 1);
+            if (e.key === 'ArrowLeft') move(-1, 0);
+            if (e.key === 'ArrowRight') move(1, 0);
         });
 
-        init();
+        initGame();
     </script>
 </body>
 </html>
